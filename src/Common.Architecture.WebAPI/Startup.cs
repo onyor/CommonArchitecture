@@ -1,16 +1,14 @@
-using Common.Architecture.Core.Entities.Concrete;
 using Common.Architecture.Persistance;
+using HRM.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using System;
 
 namespace Common.Architecture.WebAPI
 {
@@ -36,10 +34,7 @@ namespace Common.Architecture.WebAPI
             services.AddDbContext<CommonDBContext>(options =>
                 options.UseSqlServer(ConnectionString, x => x.MigrationsAssembly("Common.Architecture.Persistance")));
 
-
-            services.AddIdentity<User, IdentityRole<Guid>>()
-                .AddEntityFrameworkStores<CommonDBContext>()
-                .AddDefaultTokenProviders();
+            services.AddIdentityServices(Configuration);
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -60,8 +55,8 @@ namespace Common.Architecture.WebAPI
 
             using (var context = new CommonDBContext(Configuration.GetConnectionString("DefaultConnection")))
             {
-                    context.Database.EnsureCreated();
-                    context.Database.Migrate();
+                context.Database.EnsureCreated();
+                context.Database.Migrate();
             }
 
             app.UseHttpsRedirection();

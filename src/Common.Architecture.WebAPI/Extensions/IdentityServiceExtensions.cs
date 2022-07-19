@@ -31,10 +31,6 @@ namespace HRM.WebAPI.Extensions
                 opt.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
                 opt.Lockout.MaxFailedAccessAttempts = 3;
             })
-                .AddSignInManager<SignInManager<User>>()
-                //.AddRoles<IdentityRole>()
-                //.AddRoleManager<RoleManager<IdentityRole>>()
-                //.AddRoleValidator<RoleValidator<IdentityRole>>()
                 .AddEntityFrameworkStores<CommonDBContext>()
                 .AddDefaultTokenProviders();
 

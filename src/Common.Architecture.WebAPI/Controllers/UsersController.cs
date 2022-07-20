@@ -1,4 +1,5 @@
 ﻿using Common.Architecture.Core.Entities.ViewModels;
+using Common.Architecture.Infrastructure.Abstract;
 using Common.Architecture.Shared.TransferObjects.Idendity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -55,21 +56,27 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpPost("load")]
-        public async Task<ActionResult> LoadData()
+        public async Task<ActionResult> LoadDataAsync()
         {
             var vm = new DataTableViewModel(Request);
 
-            return await _userService.LoadDataTable(vm);
+            return await _userService.LoadDataTableAsync(vm);
         }
 
         [HttpGet()]
-        public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAllUsers()
+        public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAllAsync()
         {
-            return Ok(await _userService.GetAllAsync());
+            var result = await _carService.GetAllAsync();
+
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserDto>> GetUserById(Guid id)
+        public async Task<ActionResult<UserDto>> GetByIdAsync(Guid id)
         {
             var userDto = await _userService.GetByIdAsync(id);
             if (userDto == null)
@@ -81,7 +88,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteUser(Guid id)
+        public async Task<ActionResult> DeleteAsync(Guid id)
         {
             var userToDelete = await _userService.GetByIdAsync(id);
             if (userToDelete == null)
@@ -108,7 +115,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
             return Ok(new { currentRoleSet = true });
         }
 
-        [HttpGet("load2")]
+        [HttpGet("TestZApiCall")]
         public async Task<ActionResult> LoadData2()
         {
             DataTableViewModel vm = new DataTableViewModel()
@@ -121,7 +128,8 @@ namespace CommmonArchitecture.WebAPI.Controllers
                 SortColumn = ""
             };
 
-            return await _userService.LoadDataTable(vm);
+            //return await _userService.LoadDataTable(vm);
+            return Ok;
         }
     }
 }

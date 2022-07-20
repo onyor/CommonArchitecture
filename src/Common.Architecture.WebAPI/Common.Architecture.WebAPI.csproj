@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.17" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="5.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.17">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.Architecture.Application\Common.Architecture.Application.csproj" />
+    <ProjectReference Include="..\Common.Architecture.Infrustructure\Common.Architecture.Infrastructure.csproj" />
     <ProjectReference Include="..\Common.Architecture.Persistance\Common.Architecture.Persistance.csproj" />
   </ItemGroup>
 

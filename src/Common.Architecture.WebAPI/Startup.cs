@@ -1,13 +1,14 @@
+using Common.Architecture.Core.DependencyResolvers;
+using Common.Architecture.Core.Extensions;
+using Common.Architecture.Core.Utilities.IoC;
 using Common.Architecture.Persistance;
 using HRM.WebAPI.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 
 namespace Common.Architecture.WebAPI
@@ -23,11 +24,16 @@ namespace Common.Architecture.WebAPI
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
+            //services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //    .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
+
+            services.AddAuthenticationWithJwt(Configuration);
+
+            services.AddDependencyResolvers(new ICoreModule[]{
+                new CoreModule()
+            });
 
             ConnectionString = Configuration.GetConnectionString("DefaultConnection");
 
@@ -43,7 +49,6 @@ namespace Common.Architecture.WebAPI
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -62,6 +67,7 @@ namespace Common.Architecture.WebAPI
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            app.UseCors("AllowMVCApp");
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -70,6 +76,9 @@ namespace Common.Architecture.WebAPI
             {
                 endpoints.MapControllers();
             });
+
+            //if (Configuration.GetValue<bool>("MigrateDatabase"))
+            //MigrationHelper.MigrateRentACarDBContext(dataContext);
         }
     }
 }

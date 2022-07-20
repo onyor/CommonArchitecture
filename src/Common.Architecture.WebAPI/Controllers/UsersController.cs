@@ -1,4 +1,5 @@
 ﻿using Common.Architecture.Core.Entities.ViewModels;
+using Common.Architecture.Core.Utilities.Results;
 using Common.Architecture.Infrastructure.Abstract;
 using Common.Architecture.Shared.TransferObjects.Idendity;
 using Microsoft.AspNetCore.Authorization;
@@ -23,50 +24,41 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<UserDto> SaveUser([FromForm] UserDto dto)
+        public async Task<IActionResult> SaveUser([FromForm] UserDto dto)
         {
             if (dto.Id == Guid.Empty) // NEW USER
             {
                 var addResult = await _userService.AddAsync(dto, dto.Password, "");
-                if (addResult.Status != ResultStatus.Ok)
+                if (addResult.Success)
                 {
-                    return Result<UserDto>.Invalid(addResult.ValidationErrors);
+                    return Ok(addResult);
+
                 }
-
-                return Result<UserDto>.Success(addResult.Value);
+                return BadRequest(addResult);
             }
 
-            // EXISTING USER            
             var updateResult = await _userService.UpdateAsync(dto, dto.Password);
-            switch (updateResult.Status)
+
+            if (updateResult.Success)
             {
-                case ResultStatus.Error:
-                    return Result<UserDto>.Error();
-                case ResultStatus.Forbidden:
-                    return Result<UserDto>.Forbidden();
-                case ResultStatus.Invalid:
-                    return Result<UserDto>.Invalid(updateResult.ValidationErrors);
-                case ResultStatus.NotFound:
-                    return Result<UserDto>.NotFound();
-                default:
-                    break;
+                return Ok(updateResult);
             }
 
-            return Result<UserDto>.Success(updateResult.Value);
+            return BadRequest();
         }
 
         [HttpPost("load")]
-        public async Task<ActionResult> LoadDataAsync()
+        public async Task<IActionResult> LoadDataAsync()
         {
             var vm = new DataTableViewModel(Request);
 
-            return await _userService.LoadDataTableAsync(vm);
+            return Ok(await _userService.LoadDataTableAsync(vm));
         }
 
         [HttpGet()]
-        public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAllAsync()
+        public async Task<IActionResult> GetAllAsync()
         {
-            var result = await _carService.GetAllAsync();
+            var result = await _userService.GetAllAsync();
 
             if (result.Success)
             {
@@ -76,7 +68,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserDto>> GetByIdAsync(Guid id)
+        public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             var userDto = await _userService.GetByIdAsync(id);
             if (userDto == null)
@@ -88,7 +80,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteAsync(Guid id)
+        public async Task<IActionResult> DeleteAsync(Guid id)
         {
             var userToDelete = await _userService.GetByIdAsync(id);
             if (userToDelete == null)
@@ -110,7 +102,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
                 return NotFound("Kullanıcı bulunamadı!");
             }
 
-            await _userService.UpdateCurrentRoleAsync(userId, roleId);
+            //await _userService.UpdateCurrentRoleAsync(userId, roleId);
 
             return Ok(new { currentRoleSet = true });
         }
@@ -129,7 +121,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
             };
 
             //return await _userService.LoadDataTable(vm);
-            return Ok;
+            return Ok();
         }
     }
 }

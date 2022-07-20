@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 namespace Common.Architecture.WebAPI
 {
@@ -47,6 +48,8 @@ namespace Common.Architecture.WebAPI
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Common.Architecture.WebAPI", Version = "v1" });
             });
+
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

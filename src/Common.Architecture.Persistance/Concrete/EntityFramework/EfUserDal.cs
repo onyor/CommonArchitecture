@@ -6,6 +6,6 @@ namespace Common.Architecture.Persistance.Concrete.EntityFramework
 {
     public class EfUserDal : EfEntityRepositoryBase<User, CommonDBContext>, IUserDal
     {
-
+        
     }
 }

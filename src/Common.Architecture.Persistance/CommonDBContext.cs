@@ -22,8 +22,6 @@ namespace Common.Architecture.Persistance
         private readonly string _connectionString;
 
         private SeedData seedData = new SeedData();
-
-
         public CommonDBContext(DbContextOptions<CommonDBContext> options)
           : base(options)
         {

@@ -1,4 +1,5 @@
-﻿using Common.Architecture.Core.Entities.Concrete;
+﻿using AutoMapper;
+using Common.Architecture.Core.Entities.Concrete;
 using Common.Architecture.Core.Entities.ViewModels;
 using Common.Architecture.Core.Utilities.Results;
 using Common.Architecture.Infrastructure.Abstract;
@@ -17,64 +18,142 @@ namespace Common.Architecture.Infrastructure.Concrete
     public class UserService : IUserService
     {
         IUserDal _userDal;
+        IMapper _mapper;
         private readonly UserManager<User> _userManager;
 
-        public UserService(IUserDal userDal, UserManager<User> userManager)
+        public UserService(IUserDal userDal, UserManager<User> userManager, IMapper mapper)
         {
             _userManager = userManager;
             _userDal = userDal;
+            _mapper = mapper;
         }
 
-        public Task<IDataResult<UserDto>> AddAsync(UserDto dto, string password, string rolAd)
+        public async Task<IResult> AddAsync(UserDto dto, string password, string rolAd)
         {
             if (await _userManager.FindByEmailAsync(dto.Email) != null)
             {
-                return new ErrorResult();
+                return new ErrorResult("Ekleme işlemi başarısız");
             }
             else
             {
-                _userDal.AddAsync(user);
+                var user = _mapper.Map<User>(dto);
 
-                return new SuccessResult();
+                await _userDal.AddAsync(user);
+
+                return new SuccessResult("Kaydetme işlemi başarı ile tamamlandı!");
             }
         }
-
-        public Task<IResult> DeleteAsync(Guid userId)
+        public async Task<IResult> UpdateAsync(UserDto dto, string password)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<IDataResult<IReadOnlyList<UserDto>>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false)
-        {
-            var result = _userDal.Get(u => u.Email == email);
-
-            if (result != null)
+            if (dto != null)
             {
-                return new SuccessDataResult<User>(result);
+                var user = _mapper.Map<User>(dto);
+
+                await _userDal.UpdateAsync(user);
+
+                return new SuccessResult("Güncelleme işlemi başarı ile tamamlandı!");
             }
-            return new ErrorDataResult<User>();
+
+            return new ErrorResult("Ekleme işlemi başarısız");
+
         }
 
-        public Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false)
+        public async Task<IResult> DeleteAsync(Guid userId)
         {
-            throw new NotImplementedException();
+            if (userId != null)
+            {
+                await _userDal.DeleteAsync(userId);
+                return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
+            }
+
+            return new ErrorResult("Silme işlemi başarısız!");
         }
 
-        public Task<IDataResult<UserDto>> UpdateAsync(UserDto dto, string password)
+        public async Task<IDataResult<IReadOnlyList<List<UserDto>>>> GetAllAsync()
         {
+
+            var user = await _userDal.GetAllAsync();
+
             if (user != null)
             {
-                _userDal.Update(user);
+                var userList = _mapper.Map<List<UserDto>>(user);
 
-                return new SuccessResult();
+                return new SuccessDataResult(userList, "Silme işlemi başarı ile tamamlandı!");
             }
 
-            return new ErrorResult();
+            return new ErrorResult("Silme işlemi başarısız!");
+        }
+
+        public async Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false)
+        {
+
+            var userInfo = await _userDal.GetAsync(u => u.Id == id);
+
+            if (userInfo != null)
+            {
+                var user = _mapper.Map<UserDto>(userInfo);
+
+                return new SuccessDataResult(user, "Silme işlemi başarı ile tamamlandı!");
+            }
+
+            return new ErrorResult("Silme işlemi başarısız!");
+        }
+
+        public async Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false)
+        {
+
+            int recordsTotal = await _context.Users.Where(x => !x.IsDeleted).CountAsync();
+            int recordsFiltered = recordsTotal;
+
+            var queryAll = _context.Users
+                .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
+                    .ThenInclude(y => y.Role)
+                .Where(x => !x.IsDeleted);
+
+            var query = queryAll.Select(tempUser => new
+            {
+                Id = tempUser.Id,
+                Name = tempUser.Name,
+                Surname = tempUser.Surname,
+                Email = tempUser.Email,
+                PhoneNumber = tempUser.PhoneNumber,
+                Title = tempUser.Title,
+                RoleNames = tempUser.UserRoles
+                    .Where(x => !x.IsDeleted && !x.Role.IsDeleted)
+                    .Select(x => x.Role.Name),
+                Roles = string.Join(", ", tempUser.UserRoles
+                    .Where(x => !x.IsDeleted && !x.Role.IsDeleted)
+                    .Select(x => x.Role.Name))
+            });
+
+            //Sorting
+            if (!string.IsNullOrEmpty(vm.SortColumn) && !string.IsNullOrEmpty(vm.SortColumnDirection))
+            {
+                query = query.OrderBy(vm.SortColumn + " " + vm.SortColumnDirection);
+            }
+
+            //Search
+            if (!string.IsNullOrEmpty(vm.SearchValue))
+            {
+                query = query.Where(m =>
+                    m.Name.ToLower().Contains(vm.SearchValue.ToLower()) ||
+                    m.Surname.ToLower().Contains(vm.SearchValue.ToLower()) ||
+                    m.Email.ToLower().Contains(vm.SearchValue.ToLower()) ||
+                    m.RoleNames.Any(x => x.Contains(vm.SearchValue.ToLower())));
+
+                recordsFiltered = await query.CountAsync();
+            }
+
+            //var data = userData.Skip(vm.Skip).Take(vm.PageSize);
+            var data = await query.Skip(vm.Skip).Take(vm.PageSize).ToListAsync();
+
+            return new SuccessDataResult(new JsonResult(new
+            {
+                draw = vm.Draw,
+                recordsFiltered = recordsFiltered,
+                recordsTotal = recordsTotal,
+                data = data
+            }));
         }
     }
 }

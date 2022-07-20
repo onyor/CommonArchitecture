@@ -1,12 +1,11 @@
 ﻿using Common.Architecture.Core.CrossCuttingConcerns.Abstract;
 using Common.Architecture.Core.Utilities.IoC;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Common.Architecture.Core.CrossCuttingConcerns.Microsoft
 {

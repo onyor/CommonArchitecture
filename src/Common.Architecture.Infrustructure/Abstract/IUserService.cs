@@ -12,8 +12,8 @@ namespace Common.Architecture.Infrastructure.Abstract
 {
     public interface IUserService
     {
-        Task<IDataResult<UserDto>> AddAsync(UserDto dto, string password, string rolAd);
-        Task<IDataResult<UserDto>> UpdateAsync(UserDto dto, string password);
+        Task<IResult> AddAsync(UserDto dto, string password, string rolAd);
+        Task<IResult> UpdateAsync(UserDto dto, string password);
         Task<IResult> DeleteAsync (Guid userId);
         Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false);
         Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false);

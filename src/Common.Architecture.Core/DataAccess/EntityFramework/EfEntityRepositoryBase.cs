@@ -41,10 +41,14 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
             }
         }
 
-        public async Task DeleteAsync(TEntity entity)
+        public async Task DeleteAsync(Guid Id)
         {
             using (TContext context = new TContext())
             {
+                GetAsync(x=>x.Id == TEntity.Id);
+
+
+
                 var deletedEntity = context.Entry(entity);
                 deletedEntity.State = EntityState.Deleted;
                 await context.SaveChangesAsync();

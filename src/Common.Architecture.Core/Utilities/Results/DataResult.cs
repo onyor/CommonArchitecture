@@ -1,6 +1,6 @@
 ﻿namespace Common.Architecture.Core.Utilities.Results
 {
-    public class DataResult<T> : Result, IDataResult
+    public class DataResult<T> : Result, IDataResult<T>
     {
         public DataResult(T data, bool success, string message) : base(success, message)
         {

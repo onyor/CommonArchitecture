@@ -45,8 +45,7 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
         {
             using (TContext context = new TContext())
             {
-                GetAsync(x=>x.Id == TEntity.Id);
-
+                //GetAsync(x=>x.Id == TEntity.Id);
 
 
                 var deletedEntity = context.Entry(entity);

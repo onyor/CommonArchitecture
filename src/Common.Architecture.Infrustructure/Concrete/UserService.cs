@@ -60,16 +60,11 @@ namespace Common.Architecture.Infrastructure.Concrete
 
         public async Task<IResult> DeleteAsync(Guid userId)
         {
-            if (userId != null)
-            {
-                await _userDal.DeleteAsync(userId);
-                return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
-            }
-
-            return new ErrorResult("Silme işlemi başarısız!");
+            await _userDal.DeleteAsync(userId);
+            return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
         }
 
-        public async Task<IDataResult<IReadOnlyList<List<UserDto>>>> GetAllAsync()
+        public async Task<IDataResult<List<UserDto>>> GetAllAsync()
         {
 
             var user = await _userDal.GetAllAsync();
@@ -78,37 +73,40 @@ namespace Common.Architecture.Infrastructure.Concrete
             {
                 var userList = _mapper.Map<List<UserDto>>(user);
 
-                return new SuccessDataResult(userList, "Silme işlemi başarı ile tamamlandı!");
+                return new SuccessDataResult<List<UserDto>>(userList, "Liste alma başarı ile tamamlandı!");
             }
 
-            return new ErrorResult("Silme işlemi başarısız!");
+            return new ErrorDataResult<List<UserDto>>("Liste alma işlemi başarısız!");
         }
-
         public async Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false)
         {
 
-            var userInfo = await _userDal.GetAsync(u => u.Id == id);
+            var userInfo = await _userDal.GetAsync(x => x.Id == id);
 
             if (userInfo != null)
             {
                 var user = _mapper.Map<UserDto>(userInfo);
 
-                return new SuccessDataResult(user, "Silme işlemi başarı ile tamamlandı!");
+                return new SuccessDataResult<UserDto>(user, "Veri alma başarı ile tamamlandı!");
             }
 
-            return new ErrorResult("Silme işlemi başarısız!");
+            return new ErrorDataResult<UserDto>("Veri alma işlemi başarısız!");
         }
 
         public async Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false)
         {
 
-            int recordsTotal = await _context.Users.Where(x => !x.IsDeleted).CountAsync();
+            int recordsTotal = await _userDal.CountAsync(x => x.IsActive && !x.IsDeleted);
+
             int recordsFiltered = recordsTotal;
 
-            var queryAll = _context.Users
-                .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
-                    .ThenInclude(y => y.Role)
-                .Where(x => !x.IsDeleted);
+            var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted)
+
+
+            //_context.Users
+            //    .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
+            //        .ThenInclude(y => y.Role)
+            //    .Where(x => !x.IsDeleted);
 
             var query = queryAll.Select(tempUser => new
             {
@@ -147,7 +145,7 @@ namespace Common.Architecture.Infrastructure.Concrete
             //var data = userData.Skip(vm.Skip).Take(vm.PageSize);
             var data = await query.Skip(vm.Skip).Take(vm.PageSize).ToListAsync();
 
-            return new SuccessDataResult(new JsonResult(new
+            return new SuccessDataResult<JsonResult>(new JsonResult(new
             {
                 draw = vm.Draw,
                 recordsFiltered = recordsFiltered,

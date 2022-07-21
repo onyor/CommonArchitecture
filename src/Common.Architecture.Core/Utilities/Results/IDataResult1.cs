@@ -1,6 +1,6 @@
 ﻿namespace Common.Architecture.Core.Utilities.Results
 {
-    internal interface IDataResult
+    public interface IDataResult
     {
     }
 }

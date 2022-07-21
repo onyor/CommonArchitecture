@@ -60,8 +60,15 @@ namespace Common.Architecture.Infrastructure.Concrete
 
         public async Task<IResult> DeleteAsync(Guid userId)
         {
-            await _userDal.DeleteAsync(userId);
-            return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
+            var userInfo = await _userDal.GetAsync(x => x.Id == userId);
+            if (userInfo != null)
+            {
+                await _userDal.DeleteAsync(userInfo);
+
+                return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
+            }
+            else
+                return new ErrorResult("Silme işlemi başarısız!");
         }
 
         public async Task<IDataResult<List<UserDto>>> GetAllAsync()
@@ -100,57 +107,57 @@ namespace Common.Architecture.Infrastructure.Concrete
 
             int recordsFiltered = recordsTotal;
 
-            var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted)
+            //var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted)
 
 
-            //_context.Users
-            //    .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
-            //        .ThenInclude(y => y.Role)
-            //    .Where(x => !x.IsDeleted);
+            ////_context.Users
+            ////    .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
+            ////        .ThenInclude(y => y.Role)
+            ////    .Where(x => !x.IsDeleted);
 
-            var query = queryAll.Select(tempUser => new
-            {
-                Id = tempUser.Id,
-                Name = tempUser.Name,
-                Surname = tempUser.Surname,
-                Email = tempUser.Email,
-                PhoneNumber = tempUser.PhoneNumber,
-                Title = tempUser.Title,
-                RoleNames = tempUser.UserRoles
-                    .Where(x => !x.IsDeleted && !x.Role.IsDeleted)
-                    .Select(x => x.Role.Name),
-                Roles = string.Join(", ", tempUser.UserRoles
-                    .Where(x => !x.IsDeleted && !x.Role.IsDeleted)
-                    .Select(x => x.Role.Name))
-            });
+            //var query = queryAll.Select(tempUser => new
+            //{
+            //    Id = tempUser.Id,
+            //    Name = tempUser.Name,
+            //    Surname = tempUser.Surname,
+            //    Email = tempUser.Email,
+            //    PhoneNumber = tempUser.PhoneNumber,
+            //    Title = tempUser.Title,
+            //    RoleNames = tempUser.UserRoles
+            //        .Where(x => !x.IsDeleted && !x.Role.IsDeleted)
+            //        .Select(x => x.Role.Name),
+            //    Roles = string.Join(", ", tempUser.UserRoles
+            //        .Where(x => !x.IsDeleted && !x.Role.IsDeleted)
+            //        .Select(x => x.Role.Name))
+            //});
 
-            //Sorting
-            if (!string.IsNullOrEmpty(vm.SortColumn) && !string.IsNullOrEmpty(vm.SortColumnDirection))
-            {
-                query = query.OrderBy(vm.SortColumn + " " + vm.SortColumnDirection);
-            }
+            ////Sorting
+            //if (!string.IsNullOrEmpty(vm.SortColumn) && !string.IsNullOrEmpty(vm.SortColumnDirection))
+            //{
+            //    query = query.OrderBy(vm.SortColumn + " " + vm.SortColumnDirection);
+            //}
 
-            //Search
-            if (!string.IsNullOrEmpty(vm.SearchValue))
-            {
-                query = query.Where(m =>
-                    m.Name.ToLower().Contains(vm.SearchValue.ToLower()) ||
-                    m.Surname.ToLower().Contains(vm.SearchValue.ToLower()) ||
-                    m.Email.ToLower().Contains(vm.SearchValue.ToLower()) ||
-                    m.RoleNames.Any(x => x.Contains(vm.SearchValue.ToLower())));
+            ////Search
+            //if (!string.IsNullOrEmpty(vm.SearchValue))
+            //{
+            //    query = query.Where(m =>
+            //        m.Name.ToLower().Contains(vm.SearchValue.ToLower()) ||
+            //        m.Surname.ToLower().Contains(vm.SearchValue.ToLower()) ||
+            //        m.Email.ToLower().Contains(vm.SearchValue.ToLower()) ||
+            //        m.RoleNames.Any(x => x.Contains(vm.SearchValue.ToLower())));
 
-                recordsFiltered = await query.CountAsync();
-            }
+            //    recordsFiltered = await query.CountAsync();
+            //}
 
-            //var data = userData.Skip(vm.Skip).Take(vm.PageSize);
-            var data = await query.Skip(vm.Skip).Take(vm.PageSize).ToListAsync();
+            ////var data = userData.Skip(vm.Skip).Take(vm.PageSize);
+            //var data = await query.Skip(vm.Skip).Take(vm.PageSize).ToListAsync();
 
             return new SuccessDataResult<JsonResult>(new JsonResult(new
             {
                 draw = vm.Draw,
                 recordsFiltered = recordsFiltered,
                 recordsTotal = recordsTotal,
-                data = data
+                //data = data
             }));
         }
     }

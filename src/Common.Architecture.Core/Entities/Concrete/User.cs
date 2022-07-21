@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Common.Architecture.Core.Entities.Interface;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Common.Architecture.Core.Entities.Concrete
 {
-    public class User : IdentityUser<Guid>
+    public class User : IdentityUser<Guid>, IEntity
     {
         public string Name { get; set; }
         public string Surname { get; set; }

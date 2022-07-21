@@ -19,9 +19,6 @@ namespace Common.Architecture.Persistance.Concrete.Configurations.Identity
             builder.Property(c => c.Email)
                 .IsRequired()
                 .HasMaxLength(50);
-            builder.Property(c => c.PasswordHash)
-                .IsRequired()
-                .HasMaxLength(500);
             //builder.Property(c => c.PasswordSalt)
             //    .IsRequired()
             //    .HasMaxLength(500);

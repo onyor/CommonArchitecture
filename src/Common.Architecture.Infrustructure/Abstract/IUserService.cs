@@ -17,7 +17,7 @@ namespace Common.Architecture.Infrastructure.Abstract
         Task<IResult> DeleteAsync (Guid userId);
         Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false);
         Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false);
-        Task<IDataResult<IReadOnlyList<UserDto>>> GetAllAsync();
+        Task<IDataResult<List<UserDto>>> GetAllAsync();
 
         //IDataResult<List<OperationClaim>> GetClaims(User user);
         //IResult Add(User user);

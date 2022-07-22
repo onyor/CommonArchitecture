@@ -15,39 +15,64 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
         where TEntity : class, IEntity, new()
         where TContext : DbContext, new()
     {
-        public async Task AddAsync(TEntity entity)
+        private DbSet<TEntity> _dbSet;
+
+        public EfEntityRepositoryBase()
         {
             using (TContext context = new TContext())
             {
-                var addedEntity = context.Entry(entity);
-                addedEntity.State = EntityState.Added;
-                await context.SaveChangesAsync();
+                _dbSet = context.Set<TEntity>();
             }
+        }
+        public async Task AddAsync(TEntity entity)
+        {
+            //using (TContext context = new TContext())
+            //{
+            //    var addedEntity = context.Entry(entity);
+            //    addedEntity.State = EntityState.Added;
+            //    await context.SaveChangesAsync();
+            //}
+
+            await _dbSet.AddAsync(entity);
         }
 
         public async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            using (TContext context = new TContext())
-            {
-                return await context.Set<TEntity>().AnyAsync(predicate);
-            }
+            //using (TContext context = new TContext())
+            //{
+            //    return await context.Set<TEntity>().AnyAsync(predicate);
+            //}
+
+            return await _dbSet.AnyAsync(predicate);
         }
 
         public async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            using (TContext context = new TContext())
-            {
-                return await context.Set<TEntity>().CountAsync(predicate);
-            }
+            //using (TContext context = new TContext())
+            //{
+            //    return await context.Set<TEntity>().CountAsync(predicate);
+            //}
+            return await _dbSet.CountAsync(predicate);
         }
 
-        public async Task DeleteAsync(TEntity entity)
+        public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate)
         {
+            //using (TContext context = new TContext())
+            //{
+            //    var deletedEntity = context.Entry(entity);
+            //    deletedEntity.State = EntityState.Deleted;
+            //    await context.SaveChangesAsync();
+            //}
+
+            var entityToDelete = await GetAsync(predicate);
             using (TContext context = new TContext())
             {
-                var deletedEntity = context.Entry(entity);
-                deletedEntity.State = EntityState.Deleted;
-                await context.SaveChangesAsync();
+                if (context.Entry(entityToDelete).State == EntityState.Detached) //Concurrency için 
+                {
+                    _dbSet.Attach(entityToDelete);
+                }
+
+                _dbSet.Remove(entityToDelete);
             }
         }
 
@@ -76,35 +101,61 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
 
         public async Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate, params Expression<Func<TEntity, object>>[] includeProperties)
         {
-            using (TContext context = new TContext())
+            //using (TContext context = new TContext())
+            //{
+            //    IQueryable<TEntity> query = context.Set<TEntity>();
+
+            //    if (predicate != null)
+            //    {
+            //        query = query.Where(predicate);
+            //    }
+
+            //    if (includeProperties.Any())
+            //    {
+            //        foreach (var includeProperty in includeProperties)
+            //        {
+            //            query = query.Include(includeProperty);
+            //        }
+            //    }
+
+            //    return await query.SingleOrDefaultAsync();
+            //}
+
+            IQueryable<TEntity> query = _dbSet;
+
+            if (predicate != null)
             {
-                IQueryable<TEntity> query = context.Set<TEntity>();
-
-                if (predicate != null)
-                {
-                    query = query.Where(predicate);
-                }
-
-                if (includeProperties.Any())
-                {
-                    foreach (var includeProperty in includeProperties)
-                    {
-                        query = query.Include(includeProperty);
-                    }
-                }
-
-                return await query.SingleOrDefaultAsync();
+                query = query.Where(predicate);
             }
+
+            if (includeProperties.Any())
+            {
+                foreach (var includeProperty in includeProperties)
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
+
+            return await query.SingleOrDefaultAsync();
+
         }
 
-        public async Task UpdateAsync(TEntity entity)
+        public Task UpdateAsync(TEntity entity)
         {
+            //using (TContext context = new TContext())
+            //{
+            //    var modifiedEntity = context.Entry(entity);
+            //    modifiedEntity.State = EntityState.Modified;
+            //    await context.SaveChangesAsync();
+            //}
+
             using (TContext context = new TContext())
             {
-                var modifiedEntity = context.Entry(entity);
-                modifiedEntity.State = EntityState.Modified;
-                await context.SaveChangesAsync();
+                _dbSet.Attach(entity);
+                context.Entry(entity).State = EntityState.Modified;
             }
+
+            return Task.CompletedTask;
         }
     }
 }

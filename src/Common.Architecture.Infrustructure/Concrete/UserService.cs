@@ -60,15 +60,9 @@ namespace Common.Architecture.Infrastructure.Concrete
 
         public async Task<IResult> DeleteAsync(Guid userId)
         {
-            var userInfo = await _userDal.GetAsync(x => x.Id == userId);
-            if (userInfo != null)
-            {
-                await _userDal.DeleteAsync(userInfo);
+            await _userDal.DeleteAsync(x => x.Id == userId);
 
-                return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
-            }
-            else
-                return new ErrorResult("Silme işlemi başarısız!");
+            return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
         }
 
         public async Task<IDataResult<List<UserDto>>> GetAllAsync()

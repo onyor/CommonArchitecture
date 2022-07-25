@@ -5,6 +5,7 @@ using Common.Architecture.Core.Utilities.Interceptors;
 using Common.Architecture.Core.Utilities.Security.JWT;
 using Common.Architecture.Infrastructure.Abstract;
 using Common.Architecture.Infrastructure.Concrete;
+using Common.Architecture.Persistance;
 using Common.Architecture.Persistance.Abstract;
 using Common.Architecture.Persistance.Concrete.EntityFramework;
 
@@ -18,6 +19,8 @@ namespace Common.Architecture.Infrastructure.DependencyResolvers.Autofac
             builder.RegisterType<EfUserDal>().As<IUserDal>();
 
             builder.RegisterType<JwtHelper>().As<ITokenHelper>();
+
+            builder.RegisterType<UnitOfWork>().As<IUnitOfWork>();
 
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
 

@@ -1,7 +1,9 @@
 ﻿using Common.Architecture.Core.DataAccess.Interface;
 using Common.Architecture.Core.Entities.Concrete;
 using Common.Architecture.Core.Entities.Interface;
+using Common.Architecture.Core.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,13 +18,16 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
         where TContext : DbContext, new()
     {
         private DbSet<TEntity> _dbSet;
-
+        private IncludeHelpers<TEntity> includeHelpers;
         public EfEntityRepositoryBase()
         {
             using (TContext context = new TContext())
             {
                 _dbSet = context.Set<TEntity>();
             }
+            includeHelpers = new IncludeHelpers<TEntity>();
+
+
         }
         public async Task AddAsync(TEntity entity)
         {
@@ -34,6 +39,24 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
             //}
 
             await _dbSet.AddAsync(entity);
+        }
+
+        public Task UpdateAsync(TEntity entity)
+        {
+            //using (TContext context = new TContext())
+            //{
+            //    var modifiedEntity = context.Entry(entity);
+            //    modifiedEntity.State = EntityState.Modified;
+            //    await context.SaveChangesAsync();
+            //}
+
+            using (TContext context = new TContext())
+            {
+                _dbSet.Attach(entity);
+                context.Entry(entity).State = EntityState.Modified;
+            }
+
+            return Task.CompletedTask;
         }
 
         public async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate)
@@ -130,9 +153,9 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
 
             if (includeProperties.Any())
             {
-                foreach (var includeProperty in includeProperties)
+                foreach (var include in includeProperties)
                 {
-                    query = query.Include(includeProperty);
+                    query = query.Include(include).ThenInclude(x=>x.);
                 }
             }
 
@@ -140,22 +163,48 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
 
         }
 
-        public Task UpdateAsync(TEntity entity)
-        {
-            //using (TContext context = new TContext())
-            //{
-            //    var modifiedEntity = context.Entry(entity);
-            //    modifiedEntity.State = EntityState.Modified;
-            //    await context.SaveChangesAsync();
-            //}
 
-            using (TContext context = new TContext())
+
+        /// <summary>
+        /// Gets the first or default entity based on a predicate, orderby delegate and include delegate. This method default no-tracking query.
+        /// </summary>
+        /// <param name="selector">The selector for projection.</param>
+        /// <param name="predicate">A function to test each element for a condition.</param>
+        /// <param name="orderBy">A function to order elements.</param>
+        /// <param name="include">A function to include navigation properties</param>
+        /// <param name="disableTracking"><c>True</c> to disable changing tracking; otherwise, <c>false</c>. Default to <c>true</c>.</param>
+        /// <returns>An <see cref="IPagedList{TEntity}"/> that contains elements that satisfy the condition specified by <paramref name="predicate"/>.</returns>
+        /// <remarks>This method default no-tracking query.</remarks>
+        public TResult GetFirstOrDefault<TResult>(Expression<Func<TEntity, TResult>> selector,
+                                                  Expression<Func<TEntity, bool>> predicate = null,
+                                                  Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+                                                  Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
+                                                  bool disableTracking = true)
+        {
+            IQueryable<TEntity> query = _dbSet;
+            if (disableTracking)
             {
-                _dbSet.Attach(entity);
-                context.Entry(entity).State = EntityState.Modified;
+                query = query.AsNoTracking();
             }
 
-            return Task.CompletedTask;
+            if (include != null)
+            {
+                query = include(query);
+            }
+
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            if (orderBy != null)
+            {
+                return orderBy(query).Select(selector).FirstOrDefault();
+            }
+            else
+            {
+                return query.Select(selector).FirstOrDefault();
+            }
         }
     }
 }

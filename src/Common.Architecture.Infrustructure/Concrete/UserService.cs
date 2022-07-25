@@ -19,13 +19,15 @@ namespace Common.Architecture.Infrastructure.Concrete
     {
         IUserDal _userDal;
         IMapper _mapper;
+        IUnitOfWork _unitOfWork;
         private readonly UserManager<User> _userManager;
 
-        public UserService(IUserDal userDal, UserManager<User> userManager, IMapper mapper)
+        public UserService(IUserDal userDal, UserManager<User> userManager, IMapper mapper, IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _userDal = userDal;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IResult> AddAsync(UserDto dto, string password, string rolAd)
@@ -60,7 +62,7 @@ namespace Common.Architecture.Infrastructure.Concrete
 
         public async Task<IResult> DeleteAsync(Guid userId)
         {
-            await _userDal.DeleteAsync(x => x.Id == userId);
+            await _userDal.DeleteAsync(x => x.Id == userId && x.IsActive && !x.IsDeleted);
 
             return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
         }
@@ -81,8 +83,7 @@ namespace Common.Architecture.Infrastructure.Concrete
         }
         public async Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false)
         {
-
-            var userInfo = await _userDal.GetAsync(x => x.Id == id);
+            var userInfo = await _userDal.GetAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
 
             if (userInfo != null)
             {
@@ -96,13 +97,17 @@ namespace Common.Architecture.Infrastructure.Concrete
 
         public async Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false)
         {
+            var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Role);
 
             int recordsTotal = await _userDal.CountAsync(x => x.IsActive && !x.IsDeleted);
 
+
             int recordsFiltered = recordsTotal;
 
-            //var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted)
-
+            //var queryAll = _context.Users
+            //        .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
+            //            .ThenInclude(y => y.Role)
+            //        .Where(x => !x.IsDeleted);
 
             ////_context.Users
             ////    .Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))

@@ -19,5 +19,8 @@ namespace Common.Architecture.Core.Entities.Concrete
         public DateTime? ModifiedAt { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
+
+        public virtual Role Role { get; set; }
+        public virtual UserRole UserRoles { get; set; }
     }
 }

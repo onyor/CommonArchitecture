@@ -11,10 +11,10 @@ namespace Common.Architecture.Persistance
 {
     public class CommonDBContext : IdentityDbContext<
             User,
-            IdentityRole<Guid>,
+            Role,
             Guid,
             IdentityUserClaim<Guid>,
-            IdentityUserRole<Guid>,
+            UserRole,
             IdentityUserLogin<Guid>,
             IdentityRoleClaim<Guid>,
             IdentityUserToken<Guid>>

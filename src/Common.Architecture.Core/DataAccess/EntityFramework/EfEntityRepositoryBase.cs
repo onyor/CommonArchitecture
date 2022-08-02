@@ -155,7 +155,7 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
             {
                 foreach (var include in includeProperties)
                 {
-                    query = query.Include(include).ThenInclude(x=>x.);
+                    //query = query.Include(include).ThenInclude(x=>x.);
                 }
             }
 

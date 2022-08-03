@@ -32,31 +32,31 @@ namespace Common.Architecture.Persistance
             throw new NotImplementedException();
         }
 
-        public IEntityRepository<TEntity> GetRepository<TEntity>(bool hasCustomRepository = false) where TEntity : class
-        {
-            if (repositories == null)
-            {
-                repositories = new Dictionary<Type, object>();
-            }
+        //public IEntityRepository<TEntity> GetRepository<TEntity>(bool hasCustomRepository = false) where TEntity : class
+        //{
+        //    if (repositories == null)
+        //    {
+        //        repositories = new Dictionary<Type, object>();
+        //    }
 
-            // what's the best way to support custom reposity?
-            if (hasCustomRepository)
-            {
-                var customRepo = _context.GetService<IEntityRepository<TEntity>>();
-                if (customRepo != null)
-                {
-                    return customRepo;
-                }
-            }
+        //    // what's the best way to support custom reposity?
+        //    if (hasCustomRepository)
+        //    {
+        //        var customRepo = _context.GetService<IEntityRepository<TEntity>>();
+        //        if (customRepo != null)
+        //        {
+        //            return customRepo;
+        //        }
+        //    }
 
-            var type = typeof(TEntity);
-            if (!repositories.ContainsKey(type))
-            {
-                repositories[type] = new EfEntityRepositoryBase<TEntity, TContext>();
-            }
+        //    var type = typeof(TEntity);
+        //    if (!repositories.ContainsKey(type))
+        //    {
+        //        repositories[type] = new EfEntityRepositoryBase<TEntity, TContext>();
+        //    }
 
-            return (IEntityRepository<TEntity>)repositories[type];
-        }
+        //    return (IEntityRepository<TEntity>)repositories[type];
+        //}
 
         public int SaveChanges(bool ensureAutoHistory = false)
         {

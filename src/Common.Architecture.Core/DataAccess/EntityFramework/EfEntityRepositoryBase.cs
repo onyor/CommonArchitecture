@@ -206,5 +206,33 @@ namespace Common.Architecture.Core.DataAccess.EntityFramework
                 return query.Select(selector).FirstOrDefault();
             }
         }
+
+        public void ChangeTable(string table)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<TEntity> GetFirstOrDefaultAsync<TResult>(Expression<Func<TEntity, TResult>> selector, Expression<Func<TEntity, bool>> predicate = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null, bool disableTracking = true, bool ignoreQueryFilters = false)
+        {
+            IQueryable<TEntity> query = _dbSet;
+
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+
+            return await query.SingleOrDefaultAsync();
+        }
+
+        public Task<IList<TEntity>> GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IList<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null, bool disableTracking = true, bool ignoreQueryFilters = false)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

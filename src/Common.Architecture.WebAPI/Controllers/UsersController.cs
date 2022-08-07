@@ -24,7 +24,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveUser([FromForm] UserDto dto)
+        public async Task<IActionResult> SaveUser([FromForm] UserForLoginDto dto)
         {
             if (dto.Id == Guid.Empty) // NEW USER
             {
@@ -94,7 +94,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpPut("{id}/role/{roleId}")]
-        public async Task<ActionResult> SetCurrentRole(Guid roleId)
+        public ActionResult SetCurrentRole(Guid roleId)
         {
             var userId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
             if (userId == Guid.Empty)
@@ -108,7 +108,7 @@ namespace CommmonArchitecture.WebAPI.Controllers
         }
 
         [HttpGet("TestZApiCall")]
-        public async Task<ActionResult> LoadData2()
+        public ActionResult LoadData2()
         {
             DataTableViewModel vm = new DataTableViewModel()
             {

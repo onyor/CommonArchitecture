@@ -13,7 +13,7 @@ namespace Common.Architecture.Infrastructure.Helpers
     {
         public MappingProfiles()
         {
-            CreateMap<User, UserDto>().ReverseMap();
+            CreateMap<User, UserForLoginDto>().ReverseMap();
         }
     }
 }

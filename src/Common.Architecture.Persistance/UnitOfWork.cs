@@ -1,4 +1,5 @@
-﻿using Common.Architecture.Core.DataAccess.EntityFramework;
+﻿using Common.Architecture.Core.DataAccess.Abstract;
+using Common.Architecture.Core.DataAccess.EntityFramework;
 using Common.Architecture.Core.DataAccess.Interface;
 using Common.Architecture.Persistance.Abstract;
 using Common.Architecture.Persistance.Concrete.EntityFramework;
@@ -13,15 +14,18 @@ using System.Threading.Tasks;
 
 namespace Common.Architecture.Persistance
 {
-    public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
+    public class UnitOfWork<TContext> : IRepositoryFactory, IUnitOfWork<TContext>, IUnitOfWork where TContext : DbContext
     {
         private readonly TContext _context;
-        private Dictionary<Type, object> repositories;
-        private bool disposed = false;
+        //private Dictionary<Type, object> repositories;
+        //private bool disposed = false;
 
 
-        private EfUserDal _userDal;
+        private readonly EfUserDal _userDal;
         public IUserDal Users => _userDal ?? new EfUserDal();
+
+        public TContext DbContext => throw new NotImplementedException();
+
         public UnitOfWork(TContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -87,6 +91,21 @@ namespace Common.Architecture.Persistance
         public async ValueTask DisposeAsync()
         {
             await _context.DisposeAsync();
+        }
+
+        IEntityRepository<TEntity> IUnitOfWork.GetRepository<TEntity>(bool hasCustomRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> SaveChangesAsync(bool ensureAutoHistory = false, params IUnitOfWork[] unitOfWorks)
+        {
+            throw new NotImplementedException();
+        }
+
+        IEntityRepository<TEntity> IRepositoryFactory.GetRepository<TEntity>(bool hasCustomRepository)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Common.Architecture.Infrastructure.Concrete
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IResult> AddAsync(UserDto dto, string password, string rolAd)
+        public async Task<IResult> AddAsync(UserForLoginDto dto, string password, string rolAd)
         {
             if (await _userManager.FindByEmailAsync(dto.Email) != null)
             {
@@ -45,7 +45,7 @@ namespace Common.Architecture.Infrastructure.Concrete
                 return new SuccessResult("Kaydetme işlemi başarı ile tamamlandı!");
             }
         }
-        public async Task<IResult> UpdateAsync(UserDto dto, string password)
+        public async Task<IResult> UpdateAsync(UserForLoginDto dto, string password)
         {
             if (dto != null)
             {
@@ -67,37 +67,37 @@ namespace Common.Architecture.Infrastructure.Concrete
             return new SuccessResult("Silme işlemi başarı ile tamamlandı!");
         }
 
-        public async Task<IDataResult<List<UserDto>>> GetAllAsync()
+        public async Task<IDataResult<List<UserForLoginDto>>> GetAllAsync()
         {
 
             var user = await _userDal.GetAllAsync();
 
             if (user != null)
             {
-                var userList = _mapper.Map<List<UserDto>>(user);
+                var userList = _mapper.Map<List<UserForLoginDto>>(user);
 
-                return new SuccessDataResult<List<UserDto>>(userList, "Liste alma başarı ile tamamlandı!");
+                return new SuccessDataResult<List<UserForLoginDto>>(userList, "Liste alma başarı ile tamamlandı!");
             }
 
-            return new ErrorDataResult<List<UserDto>>("Liste alma işlemi başarısız!");
+            return new ErrorDataResult<List<UserForLoginDto>>("Liste alma işlemi başarısız!");
         }
-        public async Task<IDataResult<UserDto>> GetByIdAsync(Guid id, bool isDeleted = false)
+        public async Task<IDataResult<UserForLoginDto>> GetByIdAsync(Guid id, bool isDeleted = false)
         {
-            var userInfo = await _userDal.GetAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
+            var userInfo = await _userDal.GetFirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
 
             if (userInfo != null)
             {
-                var user = _mapper.Map<UserDto>(userInfo);
+                var user = _mapper.Map<UserForLoginDto>(userInfo);
 
-                return new SuccessDataResult<UserDto>(user, "Veri alma başarı ile tamamlandı!");
+                return new SuccessDataResult<UserForLoginDto>(user, "Veri alma başarı ile tamamlandı!");
             }
 
-            return new ErrorDataResult<UserDto>("Veri alma işlemi başarısız!");
+            return new ErrorDataResult<UserForLoginDto>("Veri alma işlemi başarısız!");
         }
 
         public async Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false)
         {
-            var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Role);
+            //var queryAll = await _userDal.GetAllAsync(x => x.IsActive && !x.IsDeleted, x => x.UserRoles.Role);
 
             int recordsTotal = await _userDal.CountAsync(x => x.IsActive && !x.IsDeleted);
 

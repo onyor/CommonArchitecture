@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Common.Architecture.Shared.TransferObjects.Idendity
 {
-    public class UserDto : IDto
+    public class UserForLoginDto : IDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; }

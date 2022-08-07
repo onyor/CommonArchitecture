@@ -44,8 +44,8 @@ namespace Common.Architecture.Persistance
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-            base.OnModelCreating(builder);
 
+            base.OnModelCreating(builder);
             this.seedData.SeedUsers(builder);
             this.seedData.SeedRoles(builder);
             this.seedData.SeedUserRoles(builder);

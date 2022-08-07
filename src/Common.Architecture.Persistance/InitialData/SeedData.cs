@@ -40,7 +40,6 @@ namespace Common.Architecture.Persistance.InitialData
                 PhoneNumber = "905315875631"
             };
 
-
             PasswordHasher<User> passwordHasher = new PasswordHasher<User>();
             passwordHasher.HashPassword(admin, "Test1234");
             builder.Entity<User>().HasData(admin);
@@ -52,23 +51,33 @@ namespace Common.Architecture.Persistance.InitialData
 
         public void SeedRoles(ModelBuilder builder)
         {
-            builder.Entity<IdentityRole<Guid>>().HasData(
-                new IdentityRole<Guid>() { Id = guidIdRole1, Name = "Admin", ConcurrencyStamp = "1", NormalizedName = "Admin" },
-                new IdentityRole<Guid>() { Id = guidIdRole2, Name = "Uye", ConcurrencyStamp = "2", NormalizedName = "Human Resource" }
-                );
+            builder.Entity<Role>().HasData(new Role
+            {
+                Id = guidIdRole1,
+                Name = "Admin",
+                ConcurrencyStamp = "1",
+                NormalizedName = "Admin"
+            });
+            builder.Entity<Role>().HasData(new Role
+            {
+                Id = guidIdRole2,
+                Name = "Uye",
+                ConcurrencyStamp = "2",
+                NormalizedName = "Human Resource"
+            });
         }
 
         public void SeedUserRoles(ModelBuilder builder)
         {
-            builder.Entity<IdentityUserRole<Guid>>().HasData(
-                new IdentityUserRole<Guid>()
+            builder.Entity<UserRole>().HasData(
+                new UserRole()
                 {
                     RoleId = guidIdRole1,
                     UserId = guidIdUser1
                 });
 
-            builder.Entity<IdentityUserRole<Guid>>().HasData(
-                new IdentityUserRole<Guid>()
+            builder.Entity<UserRole>().HasData(
+                new UserRole()
                 {
                     RoleId = guidIdRole2,
                     UserId = guidIdUser2

@@ -9,10 +9,6 @@ namespace Common.Architecture.Core.Entities.Concrete
 {
     public class Role : IdentityRole<Guid>, IEntity
     {
-        [StringLength(255)]
-        [Required]
-        public string Description { get; set; }
-
         [NotMapped]
         public string[] Claims { get; set; }
 

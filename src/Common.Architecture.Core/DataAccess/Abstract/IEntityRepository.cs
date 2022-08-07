@@ -12,17 +12,25 @@ namespace Common.Architecture.Core.DataAccess.Interface
 {
     public interface IEntityRepository<TEntity> where TEntity : class, IEntity, new()
     {
-        Task<TEntity> GetAsync(Expression<Func<TEntity, bool>> predicate,  params Expression<Func<TEntity, object>>[] includeProperties);
-        Task<IList<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, params Expression<Func<TEntity, object>>[] includeProperties);
+        void ChangeTable(string table);
+        Task<TEntity> GetFirstOrDefaultAsync<TResult>(Expression<Func<TEntity, TResult>> selector,
+             Expression<Func<TEntity, bool>> predicate = null,
+             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+             Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
+             bool disableTracking = true,
+             bool ignoreQueryFilters = false);
+
+        Task<IList<TEntity>> GetAllAsync();
+        Task<IList<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null,
+                                               Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+                                               Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
+                                               bool disableTracking = true,
+                                               bool ignoreQueryFilters = false);
         Task AddAsync(TEntity entity);
         Task UpdateAsync(TEntity entity);
         Task DeleteAsync(Expression<Func<TEntity, bool>> predicate);
         Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate);
         Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate);
-        TResult GetFirstOrDefault<TResult>(Expression<Func<TEntity, TResult>> selector,
-                                                  Expression<Func<TEntity, bool>> predicate = null,
-                                                  Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
-                                                  Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null,
-                                                  bool disableTracking = true);
+       
     }
 }

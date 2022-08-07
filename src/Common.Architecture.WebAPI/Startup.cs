@@ -2,6 +2,7 @@ using Common.Architecture.Core.DependencyResolvers;
 using Common.Architecture.Core.Extensions;
 using Common.Architecture.Core.Utilities.IoC;
 using Common.Architecture.Persistance;
+using Common.Architecture.Persistance.DependencyResolvers;
 using HRM.WebAPI.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,8 +33,9 @@ namespace Common.Architecture.WebAPI
 
             services.AddAuthenticationWithJwt(Configuration);
 
-            services.AddDependencyResolvers(new ICoreModule[]{
-                new CoreModule()
+            services.AddDependencyResolvers(new IModule[]{
+                new CoreModule(),
+                new PersistanceModule()
             });
 
             ConnectionString = Configuration.GetConnectionString("DefaultConnection");

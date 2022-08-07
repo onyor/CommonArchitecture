@@ -11,7 +11,7 @@ namespace Common.Architecture.Core.Extensions
     public static class ServiceCollentionExtensions
     {
         public static IServiceCollection AddDependencyResolvers
-            (this IServiceCollection serviceCollention, ICoreModule[] modules)
+            (this IServiceCollection serviceCollention, IModule[] modules)
         {
             foreach (var module in modules)
             {

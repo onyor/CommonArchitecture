@@ -1,6 +1,7 @@
 ﻿using Common.Architecture.Core.Entities.Concrete;
 using Common.Architecture.Core.Entities.ViewModels;
 using Common.Architecture.Infrastructure.Abstract;
+using Common.Architecture.Shared.TransferObjects.Idendity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

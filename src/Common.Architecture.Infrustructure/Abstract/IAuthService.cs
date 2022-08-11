@@ -1,4 +1,5 @@
-﻿using Common.Architecture.Core.Utilities.Results;
+﻿using Common.Architecture.Core.Entities.Concrete;
+using Common.Architecture.Core.Utilities.Results;
 using Common.Architecture.Shared.TransferObjects.Idendity;
 using System;
 using System.Collections.Generic;
@@ -11,5 +12,7 @@ namespace Common.Architecture.Infrastructure.Abstract
     public interface IAuthService
     {
         Task<IDataResult<UserForLoginDto>> BuildUserDtoAsync(Guid userId);
+        IDataResult<UserResponseDto> LoginAsync(UserForLoginDto userForLoginDto);
+
     }
 }

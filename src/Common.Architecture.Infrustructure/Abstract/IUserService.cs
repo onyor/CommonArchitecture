@@ -18,7 +18,7 @@ namespace Common.Architecture.Infrastructure.Abstract
         Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false);
         Task<IDataResult<UserForLoginDto>> GetByIdAsync(Guid id, bool isDeleted = false);
         Task<IDataResult<List<UserForLoginDto>>> GetAllAsync();
-
+        Task<IDataResult<UserResponseDto>> GetByEmailAsync(string email);
         //IDataResult<List<OperationClaim>> GetClaims(User user);
         //IResult Add(User user);
         //IDataResult<User> GetByMail(string email);

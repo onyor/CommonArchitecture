@@ -6,6 +6,7 @@ using Common.Architecture.Persistance;
 using Common.Architecture.Persistance.Abstract;
 using Common.Architecture.Shared.TransferObjects.Idendity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -18,117 +19,60 @@ namespace Common.Architecture.Infrastructure.Concrete
 
         IMapper _mapper;
         IUnitOfWork _unitOfWork;
+        IUserService _userService;
         CommonDBContext _context;
+        private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
 
-        public AuthService(CommonDBContext context,IUserDal userDal, UserManager<User> userManager, IMapper mapper, IUnitOfWork unitOfWork)
+        public AuthService(CommonDBContext context,IUserDal userDal, UserManager<User> userManager, IMapper mapper, SignInManager<User> signInManager, IUnitOfWork unitOfWork, IUserService userService)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
-            _context= context;
+            _context = new CommonDBContext();
+            _userService = userService;
         }
 
-        //public IDataResult<User> Register(UserForRegisterDto userForRegisterDto, string password)
-        //{
-        //    byte[] passwordHash, passwordSalt;
-        //    HashingHelper.CreatePasswordHash(password, out passwordHash, out passwordSalt);
-        //    var user = new User
-        //    {
-        //        Email = userForRegisterDto.Email,
-        //        FirstName = userForRegisterDto.FirstName,
-        //        LastName = userForRegisterDto.LastName,
-        //        PasswordHash = passwordHash,
-        //        PasswordSalt = passwordSalt,
-        //        Status = true
-        //    };
-        //    _userService.Add(user);
 
-        //    return new SuccessDataResult<User>(user, Messages.UserRegistered);
+        //public async Task UpdateCurrentRoleAsync(Guid userId, Guid roleId)
+        //{
+        //    var user = await _context.Users.FindAsync(userId);
+        //    user.RoleId = roleId;
+        //    user.ModifiedAt = DateTime.Now;
+        //    user.ModifiedBy = Guid.Parse(_currentUserService.GetUserId());
+
+        //    await _context.SaveChangesAsync();
         //}
 
-        //public IDataResult<User> Login(UserForLoginDto userForLoginDto)
-        //{
-        //    var userToCheck = _userService.GetByMail(userForLoginDto.Email);
-        //    if (userToCheck == null)
-        //    {
-        //        return new ErrorDataResult<User>(Messages.UserNotFound);
-        //    }
-
-        //    if (!HashingHelper.VerifyPasswordHash(userForLoginDto.Password, userToCheck.Data.PasswordHash, userToCheck.Data.PasswordSalt))
-        //    {
-        //        return new ErrorDataResult<User>(Messages.PasswordError);
-        //    }
-
-        //    return new SuccessDataResult<User>(userToCheck.Data, Messages.SuccessfulLogin);
-        //}
-
-        //public IResult UserExists(string email)
-        //{
-        //    var result = _userService.GetByMail(email);
-        //    if (result != null)
-        //    {
-        //        return new SuccessResult();
-        //    }
-        //    return new ErrorResult(Messages.UserAlreadyExists);
-        //}
-
-        //public IDataResult<AccessToken> CreateAccessToken(User user)
-        //{
-        //    var claims = _userService.GetClaims(user);
-        //    var accessToken = _tokenHelper.CreateToken(user, claims.Data);
-        //    return new SuccessDataResult<AccessToken>(accessToken, Messages.AccessTokenCreated);
-        //}
-
-
-        public async Task<IDataResult<UserForLoginDto>> BuildUserDtoAsync(Guid userId)
+        public async Task<IDataResult<UserResponseDto>> LoginAsync(UserForLoginDto userForLoginDto)
         {
-            var user = await _context.Users
-                //.Include(x => x.UserRoles.Where(x => !x.IsDeleted && !x.Role.IsDeleted))
-                    //.ThenInclude(y => y.Role)
-                .Include(x => x.Role)
-                .FirstOrDefaultAsync(x => x.Id == userId && x.IsDeleted == false);
-            if (user == null)
+
+            var  userToCheck = await _userService.GetByEmailAsync(userForLoginDto.Email);
+
+            if (!userToCheck.Success)
             {
-                return new ErrorDataResult<UserForLoginDto>("Kullanıcı bulunamadı!");
+                return new ErrorDataResult<UserResponseDto>("Sistemde böyle bir mail bulunamadı");
             }
 
-            var userRoles = user.UserRoles.Where(x => !x.IsDeleted).Select(ur => new UserRoleDto
+            var resultUserLogin = await _signInManager.CheckPasswordSignInAsync(_mapper.Map<User>(userToCheck), userForLoginDto.Password, false);
+            if (!resultUserLogin.Succeeded)
             {
-                UserId = user.Id,
-                UserName = user.UserName,
-                RoleId = ur.RoleId,
-                RoleName = ur.Role.Name
-            }).ToArray();
+                return new ErrorDataResult<UserResponseDto>("EPosta / Şifre hatalı giriş yapıldı!");
+            }
 
-            var newUserDto = new UserForLoginDto
+            if (!HashingHelper.VerifyPasswordHash(userForLoginDto.Password, userToCheck.Data.PasswordHash, userToCheck.Data.PasswordSalt))
             {
-                Id = user.Id,
-                Name = user.Name,
-                Surname = user.Surname,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                //ExpirationMinutes = _jwtService.GetMinutes,
-                UserRoles = userRoles,
-                UserRolesCsv = string.Join(", ", userRoles.Select(ur => ur.RoleName)),
-                CurrentRoleId = user.RoleId ?? userRoles.Select(x => x.RoleId).First(),
-                CurrentRoleName = user.Role?.Name ?? userRoles.Select(x => x.RoleName).First()
-            };
-            //newUserDto.Token = _jwtService.CreateToken(newUserDto);
+                return new ErrorDataResult<UserResponseDto>("Hatalı Şifre");
+            }
 
+            if (!userToCheck.Data.UserRoles.Any())
+            {
+                //user does not have any valid roles
+                return new ErrorDataResult<UserResponseDto>("Kullanıcıya ait geçerli bir rol bulunamadı!");
+            }
 
-            return new ErrorDataResult<UserForLoginDto>("Veri alma işlemi başarısız!");
+            return new SuccessDataResult<UserResponseDto>(userToCheck.Data, "Sisteme başarı ile giriş yapıldı!");
         }
-
-        public async Task UpdateCurrentRoleAsync(Guid userId, Guid roleId)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            user.RoleId = roleId;
-            user.ModifiedAt = DateTime.Now;
-            user.ModifiedBy = Guid.Parse(_currentUserService.GetUserId());
-
-            await _context.SaveChangesAsync();
-        }
-
     }
 }

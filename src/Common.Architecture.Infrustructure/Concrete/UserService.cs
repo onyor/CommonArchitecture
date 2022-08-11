@@ -3,10 +3,13 @@ using Common.Architecture.Core.Entities.Concrete;
 using Common.Architecture.Core.Entities.ViewModels;
 using Common.Architecture.Core.Utilities.Results;
 using Common.Architecture.Infrastructure.Abstract;
+using Common.Architecture.Persistance;
 using Common.Architecture.Persistance.Abstract;
 using Common.Architecture.Shared.TransferObjects.Idendity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +23,7 @@ namespace Common.Architecture.Infrastructure.Concrete
         IUserDal _userDal;
         IMapper _mapper;
         IUnitOfWork _unitOfWork;
+        CommonDBContext _context;
         private readonly UserManager<User> _userManager;
 
         public UserService(IUserDal userDal, UserManager<User> userManager, IMapper mapper, IUnitOfWork unitOfWork)
@@ -28,6 +32,7 @@ namespace Common.Architecture.Infrastructure.Concrete
             _userDal = userDal;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _context = new CommonDBContext();
         }
 
         public async Task<IResult> AddAsync(UserForLoginDto dto, string password, string rolAd)
@@ -81,9 +86,11 @@ namespace Common.Architecture.Infrastructure.Concrete
 
             return new ErrorDataResult<List<UserForLoginDto>>("Liste alma işlemi başarısız!");
         }
-        public async Task<IDataResult<UserForLoginDto>> GetByIdAsync(Guid id, bool isDeleted = false)
+        public async Task<IDataResult<UserForLoginDto>> GetByIdAsync(Guid id)
         {
-            var userInfo = await _userDal.GetFirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
+
+            var userInfo = await _context.Users.FirstOrDefaultAsync(x => x.Id == id);
+            //var userInfo = await _userDal.GetFirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
 
             if (userInfo != null)
             {
@@ -93,6 +100,22 @@ namespace Common.Architecture.Infrastructure.Concrete
             }
 
             return new ErrorDataResult<UserForLoginDto>("Veri alma işlemi başarısız!");
+        }   
+        
+        public async Task<IDataResult<UserResponseDto>> GetByEmailAsync(string email)
+        {
+
+            var userInfo = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+            //var userInfo = await _userDal.GetFirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
+
+            if (userInfo != null)
+            {
+                var user = _mapper.Map<UserResponseDto>(userInfo);
+
+                return new SuccessDataResult<UserResponseDto>(user, "Veri alma başarı ile tamamlandı!");
+            }
+
+            return new ErrorDataResult<UserResponseDto>("Veri alma işlemi başarısız!");
         }
 
         public async Task<IDataResult<JsonResult>> LoadDataTableAsync(DataTableViewModel vm, bool isActive = true, bool isDeleted = false)

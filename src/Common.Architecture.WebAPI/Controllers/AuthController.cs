@@ -60,59 +60,59 @@ namespace Common.Architecture.WebAPI.Controllers
         }
 
 
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public async Task<ActionResult<UserDto>> Register([FromForm] RegisterDto dto)
-        {
-            if (CheckEmailExists(dto.Email).Result.Value)
-            {
-                return BadRequest("Email is in use!");
-            }
+        //[AllowAnonymous]
+        //[HttpPost("register")]
+        //public async Task<ActionResult<UserDto>> Register([FromForm] RegisterDto dto)
+        //{
+        //    if (CheckEmailExists(dto.Email).Result.Value)
+        //    {
+        //        return BadRequest("Email is in use!");
+        //    }
 
-            var user = _mapper.Map<User>(dto);
-            user.Email = user.Email.ToLower();
-            user.UserName = user.Email.ToLower();
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors);
-            }
+        //    var user = _mapper.Map<User>(dto);
+        //    user.Email = user.Email.ToLower();
+        //    user.UserName = user.Email.ToLower();
+        //    var result = await _userManager.CreateAsync(user, dto.Password);
+        //    if (!result.Succeeded)
+        //    {
+        //        return BadRequest(result.Errors);
+        //    }
 
-            var roleResult = await _userManager.AddToRoleAsync(user, "Üye");
-            if (!roleResult.Succeeded)
-            {
-                return BadRequest(roleResult.Errors);
-            }
+        //    var roleResult = await _userManager.AddToRoleAsync(user, "Üye");
+        //    if (!roleResult.Succeeded)
+        //    {
+        //        return BadRequest(roleResult.Errors);
+        //    }
 
-            // SEND Confirmation Email
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var param = new Dictionary<string, string>
-            {
-                {"email", user.Email },
-                {"token", token }
-            };
-            //var clientURI = _config["FrontendUrl"] + "pages/auth/login";
-            var clientURI = "http://localhost:33070/Account/ConfirmEmail";
-            var callback = QueryHelpers.AddQueryString(clientURI, param);
-            var fullName = dto.Name + " " + dto.Surname;
-            var toEmail = user.Email; //"istech@mailinator.com";
-            var subject = "Eposta Doğrulama";
-            var emailBodyHtml = $@"
-                Merhaba {fullName},
-                <br/>
-                Lütfen Eposta adresini doğrulamak için <a href='{callback}'>tıkla</a>.";
+        //    // SEND Confirmation Email
+        //    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        //    var param = new Dictionary<string, string>
+        //    {
+        //        {"email", user.Email },
+        //        {"token", token }
+        //    };
+        //    //var clientURI = _config["FrontendUrl"] + "pages/auth/login";
+        //    var clientURI = "http://localhost:33070/Account/ConfirmEmail";
+        //    var callback = QueryHelpers.AddQueryString(clientURI, param);
+        //    var fullName = dto.Name + " " + dto.Surname;
+        //    var toEmail = user.Email; //"istech@mailinator.com";
+        //    var subject = "Eposta Doğrulama";
+        //    var emailBodyHtml = $@"
+        //        Merhaba {fullName},
+        //        <br/>
+        //        Lütfen Eposta adresini doğrulamak için <a href='{callback}'>tıkla</a>.";
 
-            return new UserDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Surname = user.Surname,
-                Title = user.Title,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                UserRolesCsv = "Üye"
-            };
-        }
+        //    return new UserDto
+        //    {
+        //        Id = user.Id,
+        //        Name = user.Name,
+        //        Surname = user.Surname,
+        //        Title = user.Title,
+        //        Email = user.Email,
+        //        PhoneNumber = user.PhoneNumber,
+        //        UserRolesCsv = "Üye"
+        //    };
+        //}
 
 
         [AllowAnonymous]
@@ -142,73 +142,17 @@ namespace Common.Architecture.WebAPI.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login([FromForm] LoginDto dto)
+        public async Task<ActionResult<UserForLoginDto>> Login([FromForm] UserForLoginDto dto)
         {
             if (dto.Email == null || dto.Password == null)
                 return NotFound("EPosta / Şifre hatalı giriş yapıldı!");
 
-            UserDto userDto = new UserDto();
-            long personelTanimId = 0;
-            long personelSicilNo = 0;
-            PersonelTanimDto personelTanim = null;
-            //var user = await _userManager.Users.FirstOrDefaultAsync(x =>
-            //    x.Email.ToLower() == dto.Email.ToLower() && !x.IsDeleted);
-            if (!dto.Email.Contains("@"))
+            var userToLogin = _authService.LoginAsync(dto);
+            if (!userToLogin.Success)
             {
-                //  var sonuc = Functions.mysfADAuthenticate("DPTDOMAIN", "10.10.1.25", "aydin.mehmet", "Plkmn1234+");
-                var sonuc = Functions.mysfADAuthenticate(dto.Email, dto.Password);
-                if (!string.IsNullOrEmpty(sonuc))
-                {
-                    return Unauthorized("EPosta / Şifre hatalı giriş yapıldı!");
-                }
-
-                userDto = await _userService.GetByLdapAsync(dto.Email);
-                if (userDto == null)
-                {
-                    userDto = new UserDto();
-                    userDto.Email = dto.Email + "@" + HRM.Application.ApplicationData.ApplicationSettings.Where(x => x.Ad == "DomainEmail").FirstOrDefault().Deger;
-                    userDto.LdapKod = dto.Email;
-                    userDto.Password = dto.Password;
-                    userDto.Name = dto.Email;
-                    userDto.Surname = dto.Email;
-                    var personelKontrol = await _personelTanimService.GetByDomainAdAsync(userDto.LdapKod);
-                    if (personelKontrol.Status != Ardalis.Result.ResultStatus.Ok)
-                        return BadRequest("LoginError400");
-                    personelTanim = personelKontrol.Value;
-                    personelTanimId = personelTanim.Id;
-                    personelSicilNo = personelTanim.KurumSicilNo;
-                    userDto.Name = personelTanim.Ad;
-                    userDto.Surname = personelTanim.Soyad;
-                    userDto.Title = personelTanim.GorevTanimIdAd;
-                    userDto = await _userService.AddAsync(userDto, dto.Password, "Kullanici");
-                    userDto = await _userService.GetByEmailAsync(userDto.Email);
-                }
+                return BadRequest(userToLogin.Message);
             }
-
-            else
-            {
-                userDto = await _userService.GetByEmailAsync(dto.Email);
-
-
-                if (userDto.Email == null)
-                {
-                    //User not found!
-                    return NotFound("Hatalı kullanıcı bilgisi!");
-                }
-
-                var resultUserLogin = await _signInManager.CheckPasswordSignInAsync(_mapper.Map<User>(userDto), dto.Password, false);
-                if (!resultUserLogin.Succeeded)
-                {
-                    return Unauthorized("EPosta / Şifre hatalı giriş yapıldı!");
-                }
-
-                // rolu olmayan login olamaz!!!
-                if (!userDto.UserRoles.Any())
-                {
-                    //user does not have any valid roles
-                    return NotFound("Kullanıcıya ait geçerli bir rol bulunamadı!");
-                }
-            }
+            
 
             if (personelTanim == null)
             {

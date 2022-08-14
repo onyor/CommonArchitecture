@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Common.Architecture.WebAPI.Controllers
 {
-    [Route("api/[controller")]
+    [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     public class AuthController: Controller
@@ -33,6 +33,7 @@ namespace Common.Architecture.WebAPI.Controllers
         {
             //_jwtService = jwtService;
             _roleManager = roleManager;
+            _authService = authService;
             _signInManager = signInManager;
             _userManager = userManager;
             _userService = userService;

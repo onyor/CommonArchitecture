@@ -7,13 +7,10 @@ using Common.Architecture.Persistance;
 using Common.Architecture.Persistance.Abstract;
 using Common.Architecture.Shared.TransferObjects.Idendity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Common.Architecture.Infrastructure.Concrete
@@ -100,8 +97,8 @@ namespace Common.Architecture.Infrastructure.Concrete
             }
 
             return new ErrorDataResult<UserForLoginDto>("Veri alma işlemi başarısız!");
-        }   
-        
+        }
+
         public async Task<IDataResult<UserResponseDto>> GetByEmailAsync(string email)
         {
 
@@ -181,6 +178,11 @@ namespace Common.Architecture.Infrastructure.Concrete
                 recordsTotal = recordsTotal,
                 //data = data
             }));
+        }
+
+        public Task<IDataResult<UserForLoginDto>> GetByIdAsync(Guid id, bool isDeleted = false)
+        {
+            throw new NotImplementedException();
         }
     }
 }

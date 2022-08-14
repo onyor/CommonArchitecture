@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Common.Architecture.Core.Entities.Concrete;
 using Common.Architecture.Core.Utilities.Results;
+using Common.Architecture.Core.Utilities.Security.Hashing;
 using Common.Architecture.Infrastructure.Abstract;
 using Common.Architecture.Persistance;
 using Common.Architecture.Persistance.Abstract;
@@ -73,6 +74,11 @@ namespace Common.Architecture.Infrastructure.Concrete
             }
 
             return new SuccessDataResult<UserResponseDto>(userToCheck.Data, "Sisteme başarı ile giriş yapıldı!");
+        }
+
+        public Task<IDataResult<UserForLoginDto>> BuildUserDtoAsync(Guid userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

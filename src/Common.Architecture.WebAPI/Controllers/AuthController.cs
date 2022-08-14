@@ -39,25 +39,25 @@ namespace Common.Architecture.WebAPI.Controllers
         }
 
 
-        [HttpGet]
-        public async Task<ActionResult<UserForLoginDto>> GetCurrentUser()
-        {
-            var userId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
-            if (userId == Guid.Empty)
-            {
-                return BadRequest("LoginError400");
-            }
+        //[HttpGet]
+        //public async Task<ActionResult<UserForLoginDto>> GetCurrentUser()
+        //{
+        //    var userId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
+        //    if (userId == Guid.Empty)
+        //    {
+        //        return BadRequest("LoginError400");
+        //    }
 
-            //var user = await _userService.GetByIdAsync(userId);
-            //if (user == null)
-            //{
-            //    //User not found!
-            //    return BadRequest("LoginError400");
-            //}
-            var result = await _userService.BuildUserDtoAsync(userId);
+        //    //var user = await _userService.GetByIdAsync(userId);
+        //    //if (user == null)
+        //    //{
+        //    //    //User not found!
+        //    //    return BadRequest("LoginError400");
+        //    //}
+        //    var result = await _userService.BuildUserDtoAsync(userId);
 
-            return Ok(result.Value);
-        }
+        //    return Ok(result.Value);
+        //}
 
 
         //[AllowAnonymous]
@@ -146,128 +146,100 @@ namespace Common.Architecture.WebAPI.Controllers
         {
             if (dto.Email == null || dto.Password == null)
                 return NotFound("EPosta / Şifre hatalı giriş yapıldı!");
-
-            var userToLogin = _authService.LoginAsync(dto);
+            
+            var userToLogin = await _authService.LoginAsync(dto);
             if (!userToLogin.Success)
             {
                 return BadRequest(userToLogin.Message);
             }
-            
-
-            if (personelTanim == null)
-            {
-                personelTanim = (await _personelTanimService.GetByDomainAdAsync(userDto.LdapKod)).Value;
-                if (personelTanim != null)
-                {
-                    personelTanimId = personelTanim.Id;
-                    personelSicilNo = personelTanim.KurumSicilNo;
-                }
-            }
-            await _userService.LogUserAction(userDto.Id, "Login");
-            var result = await _userService.BuildUserDtoAsync(userDto.Id);
-            result.Value.PersonelTanimId = personelTanimId;
-            result.Value.PersonelSicilNo = personelSicilNo;
-            result.Value.SorumluBirimList = "";
-            if (personelTanimId > 0)
-            {
-                //var sorumluKurumList = string.Join(',', ApplicationData.BirimList.Where(x => x.PersonelTanimId == personelTanimId).Select(x => x.Id).ToArray());
-                var sorumluKurumList = ApplicationData.BirimList.Where(x => x.PersonelTanimId == personelTanimId).Select(x => x.Id).ToArray();
-                var bagliBirimList = "";
-                if (sorumluKurumList.Length > 0)
-                {
-                    foreach (var item in sorumluKurumList)
-                    {
-                        bagliBirimList += string.Join(',', ApplicationData.BirimList.Where(x => x.UstKurumBilgi.Contains(item.ToString())).Select(x => x.Id).ToArray()) + ",";
-                    }
-                    result.Value.SorumluBirimList = bagliBirimList.Remove(bagliBirimList.Length - 1, 1);
-                }
-
-            }
-            return Ok(result.Value);
+         
+            return Ok(userToLogin);
         }
 
 
-        [Authorize(Roles = "Admin")]
-        [HttpPost("loginAsUser")]
-        public async Task<ActionResult<UserDto>> LoginAsUser([FromForm] string email)
-        {
-            var adminId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
-            var userDto = await _userService.GetByEmailAsync(email);
-            if (userDto == null)
-            {
-                //User not found!
-                return BadRequest("LoginError400");
-            }
+        //[Authorize(Roles = "Admin")]
+        //[HttpPost("loginAsUser")]
+        //public async Task<ActionResult<UserDto>> LoginAsUser([FromForm] string email)
+        //{
+        //    var adminId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
+        //    var userDto = await _userService.GetByEmailAsync(email);
+        //    if (userDto == null)
+        //    {
+        //        //User not found!
+        //        return BadRequest("LoginError400");
+        //    }
 
-            // rolu olmayan login olamaz!!!
-            if (!userDto.UserRoles.Any())
-            {
-                //user does not have any valid roles
-                return Unauthorized("LoginError401");
-            }
+        //    // rolu olmayan login olamaz!!!
+        //    if (!userDto.UserRoles.Any())
+        //    {
+        //        //user does not have any valid roles
+        //        return Unauthorized("LoginError401");
+        //    }
 
-            // bypass password control but add to AuditLog
-            await _userService.LogUserAction(adminId, "Login", userDto.Id.ToString());
-            var result = await _userService.BuildUserDtoAsync(userDto.Id);
+        //    // bypass password control but add to AuditLog
+        //    await _userService.LogUserAction(adminId, "Login", userDto.Id.ToString());
+        //    var result = await _userService.BuildUserDtoAsync(userDto.Id);
 
-            return Ok(result.Value);
-        }
-
-
-
-        [AllowAnonymous]
-        [HttpPost("resetPassword")]
-        public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                // Don't reveal that the user does not exist
-                return Ok();
-            }
-
-            //var token = HttpUtility.UrlEncode(model.Token);
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors.Select(error => error.Description));
-            }
-
-            return Ok(new { resetPassword = true });
-        }
-
-        [HttpPost("changePassword")]
-        public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordDto model)
-        {
-            var userId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
-            if (userId == Guid.Empty)
-            {
-                return BadRequest("LoginError400");
-            }
-            var userDto = await _userService.GetByIdAsync(userId);
-            if (userDto == null)
-            {
-                //User not found!
-                return BadRequest("LoginError400");
-            }
-
-            //var result = await _userManager.ChangePasswordAsync(userDto, model.CurrentPassword, model.NewPassword);
-            //if (!result.Succeeded)
-            //{
-            //    return BadRequest(result.Errors.Select(error => error.Description));
-            //}
-
-            return Ok(new { passwordChanged = true });
-        }
+        //    return Ok(result.Value);
+        //}
 
 
-        [HttpPost("load")]
-        public async Task<IActionResult> LoadData()
-        {
-            var vm = new DataTableViewModel(Request);
 
-            return await _userService.LoadDataTable(vm);
-        }
+        //[AllowAnonymous]
+        //[HttpPost("resetPassword")]
+        //public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordDto model)
+        //{
+        //    var user = await _userManager.FindByEmailAsync(model.Email);
+        //    if (user == null)
+        //    {
+        //        // Don't reveal that the user does not exist
+        //        return Ok();
+        //    }
+
+        //    //var token = HttpUtility.UrlEncode(model.Token);
+        //    var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+        //    if (!result.Succeeded)
+        //    {
+        //        return BadRequest(result.Errors.Select(error => error.Description));
+        //    }
+
+        //    return Ok(new { resetPassword = true });
+        //}
+
+
+
+        //[HttpPost("changePassword")]
+        //public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordDto model)
+        //{
+        //    var userId = Guid.Parse(HttpContext.User.Claims.First(t => t.Type == "UserId").Value);
+        //    if (userId == Guid.Empty)
+        //    {
+        //        return BadRequest("LoginError400");
+        //    }
+        //    var userDto = await _userService.GetByIdAsync(userId);
+        //    if (userDto == null)
+        //    {
+        //        //User not found!
+        //        return BadRequest("LoginError400");
+        //    }
+
+        //    //var result = await _userManager.ChangePasswordAsync(userDto, model.CurrentPassword, model.NewPassword);
+        //    //if (!result.Succeeded)
+        //    //{
+        //    //    return BadRequest(result.Errors.Select(error => error.Description));
+        //    //}
+
+        //    return Ok(new { passwordChanged = true });
+        //}
+
+
+        //[HttpPost("load")]
+        //public async Task<IActionResult> LoadData()
+        //{
+        //    var vm = new DataTableViewModel(Request);
+
+        //    return await _userService.LoadDataTable(vm);
+        //}
 
 
         [HttpGet("emailExists")]
@@ -276,46 +248,5 @@ namespace Common.Architecture.WebAPI.Controllers
             return await _userManager.FindByEmailAsync(email) != null;
         }
 
-
-
-
-
-
-        //[HttpPost("login")]
-        //public ActionResult Login(UserForLoginDto userForLoginDto)
-        //{
-        //    var userToLogin = _authService.Login(userForLoginDto);
-        //    if (!userToLogin.Success)
-        //    {
-        //        return BadRequest(userToLogin.Message);
-        //    }
-
-        //    var result = _authService.CreateAccessToken(userToLogin.Data);
-        //    if (result.Success)
-        //    {
-        //        return Ok(result.Data);
-        //    }
-
-        //    return BadRequest(result.Message);
-        //}
-
-        //[HttpPost("register")]
-        //public ActionResult Register(UserForRegisterDto userForRegisterDto)
-        //{
-        //    var userExists = _authService.UserExists(userForRegisterDto.Email);
-        //    if (!userExists.Success)
-        //    {
-        //        return BadRequest(userExists.Message);
-        //    }
-
-        //    var registerResult = _authService.Register(userForRegisterDto, userForRegisterDto.Password);
-        //    var result = _authService.CreateAccessToken(registerResult.Data);
-        //    if (result.Success)
-        //    {
-        //        return Ok(result.Data);
-        //    }
-
-        //    return BadRequest(result.Message);
-        //}
     }
 }

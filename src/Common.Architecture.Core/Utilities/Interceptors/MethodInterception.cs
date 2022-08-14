@@ -3,7 +3,7 @@ using System;
 
 namespace Common.Architecture.Core.Utilities.Interceptors
 {
-    public class MethodIterception : MethodInterceptionBaseAttribute
+    public class MethodInterception : MethodInterceptionBaseAttribute
     {
         protected virtual void OnBefore(IInvocation invocation) { }
         protected virtual void OnAfter(IInvocation invocation) { }

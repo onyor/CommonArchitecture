@@ -12,7 +12,7 @@ namespace Common.Architecture.Infrastructure.Abstract
     public interface IAuthService
     {
         Task<IDataResult<UserForLoginDto>> BuildUserDtoAsync(Guid userId);
-        IDataResult<UserResponseDto> LoginAsync(UserForLoginDto userForLoginDto);
+        Task<IDataResult<UserResponseDto>> LoginAsync(UserForLoginDto userForLoginDto);
 
     }
 }

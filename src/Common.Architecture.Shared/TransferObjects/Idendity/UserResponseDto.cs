@@ -27,7 +27,8 @@ namespace Common.Architecture.Shared.TransferObjects.Idendity
         public long? PersonelSicilNo { get; set; }
         public string SorumluBirimList { get; set; }
 
-        public string PasswordHash { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
         public bool EmailConfirmed { get; set; }
 
 
